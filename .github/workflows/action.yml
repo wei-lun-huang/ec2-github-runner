@@ -50,24 +50,14 @@ jobs:
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws configure set default.region ${{ secrets.AWS_REGION }}
-      # - name: trigger
-      #   env:
-      #       AWS_EC2_SSH_PRIVATE_KEY: ${{ secrets.AWS_EC2_SSH_PRIVATE_KEY }}
-      #       AWS_EC2_SSH_HOSTNAME: ${{secrets.AWS_EC2_SSH_HOST}}
-      #   run: |
-      #     echo "$AWS_EC2_SSH_PRIVATE_KEY" > private_key && chmod 600 private_key
-      #     ssh -o StrictHostKeyChecking=no -T -i private_key ubuntu@${AWS_EC2_SSH_HOSTNAME}
-      #     pwd
-      - name: multiple command
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{secrets.AWS_EC2_SSH_HOST}}
-          username: ubuntu
-          key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          port: 22
-          script: |
-            pwd
-            ls -al
+      - name: trigger
+        env:
+            AWS_EC2_SSH_PRIVATE_KEY: ${{ secrets.AWS_EC2_SSH_PRIVATE_KEY }}
+            AWS_EC2_SSH_HOSTNAME: ${{secrets.AWS_EC2_SSH_HOST}}
+        run: |
+          echo "$AWS_EC2_SSH_PRIVATE_KEY" > private_key && chmod 600 private_key
+          ssh -o StrictHostKeyChecking=no -i private_key ubuntu@${AWS_EC2_SSH_HOSTNAME}
+          pwd
   do:
     runs-on: self-hosted
     needs: trigger
