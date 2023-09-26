@@ -36,7 +36,7 @@ jobs:
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws configure set default.region ${{ secrets.AWS_REGION }}
-      - name: list EC2
+      - name: start EC2
         run: |
           aws ec2 start-instances --instance-ids i-028d6de4c222619ec
   do:
@@ -45,7 +45,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Run a one-line script
+        env:
+            AWS_EC2_SSH_PRIVATE_KEY: ${{ secrets.AWS_EC2_SSH_PRIVATE_KEY }}
+            AWS_EC2_SSH_HOSTNAME: ${{secrets.AWS_EC2_SSH_HOST}}
         run: |
+          echo AWS_EC2_SSH_HOSTNAME
+          echo ${AWS_EC2_SSH_HOSTNAME}
+          ssh -i AWS_EC2_SSH_PRIVATE_KEY ubuntu@${AWS_EC2_SSH_HOSTNAME}
           echo 'Hello World!'
   stop:
     name: stop EC2
@@ -59,6 +65,6 @@ jobs:
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws configure set default.region ${{ secrets.AWS_REGION }}
-      - name: list EC2
+      - name: stop EC2
         run: |
           aws ec2 stop-instances --instance-ids i-028d6de4c222619ec
