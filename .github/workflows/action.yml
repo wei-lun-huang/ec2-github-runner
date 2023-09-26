@@ -39,12 +39,12 @@ jobs:
       - name: start EC2
         run: |
           aws ec2 start-instances --instance-ids i-028d6de4c222619ec
-  do:
-    runs-on: self-hosted
+  trigger:
+    runs-on: ubuntu-latest
     needs: start
     steps:
       - uses: actions/checkout@v2
-      - name: Run a one-line script
+      - name: trigger
         env:
             AWS_EC2_SSH_PRIVATE_KEY: ${{ secrets.AWS_EC2_SSH_PRIVATE_KEY }}
             AWS_EC2_SSH_HOSTNAME: ${{secrets.AWS_EC2_SSH_HOST}}
@@ -52,6 +52,14 @@ jobs:
           echo AWS_EC2_SSH_HOSTNAME
           echo ${AWS_EC2_SSH_HOSTNAME}
           ssh -i AWS_EC2_SSH_PRIVATE_KEY ubuntu@${AWS_EC2_SSH_HOSTNAME}
+          pwd
+  do:
+    runs-on: self-hosted
+    needs: trigger
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run a one-line script
+        run: |
           echo 'Hello World!'
   stop:
     name: stop EC2
