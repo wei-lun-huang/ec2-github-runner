@@ -10,20 +10,17 @@ on:
       - master
     types: [opened, synchronize]
 jobs:
-  deploy:
-    name: Connect to Amazon S3
+  list:
+    name: List EC2
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-    - name: Configure AWS credentials from Test account
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: arn:aws:iam::473024607515:user/weilun.huang
-        aws-region: ap-northeast-1
-    - name: list EC2
-      run: |
-        aws ec2 describe-instances --filters "Name=tag:Name,Values=roo-github-actions-runner"
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Configure AWS credentials
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set default.region ${{ secrets.AWS_REGION }}
+      - name: list EC2
+        run: |
+          aws ec2 describe-instances --filters "Name=tag:Name,Values=roo-github-actions-runner"
