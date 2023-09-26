@@ -53,11 +53,11 @@ jobs:
       - name: trigger
         env:
             AWS_EC2_SSH_PRIVATE_KEY: ${{ secrets.AWS_EC2_SSH_PRIVATE_KEY }}
-            AWS_EC2_SSH_HOSTNAME: ${{secrets.AWS_EC2_SSH_HOST}}
+            AWS_EC2_SSH_HOST: ${{secrets.AWS_EC2_SSH_HOST}}
+            AWS_EC2_SSH_USER: ${{secrets.AWS_EC2_SSH_USER}}
         run: |
           echo "$AWS_EC2_SSH_PRIVATE_KEY" > private_key && chmod 600 private_key
-          ssh-keyscan -H ${AWS_EC2_SSH_HOSTNAME} >> ~/.ssh/known_hosts
-          ssh -o StrictHostKeyChecking=no -i private_key ubuntu@${AWS_EC2_SSH_HOSTNAME}
+          ssh -o StrictHostKeyChecking=no -i private_key ${AWS_EC2_SSH_USER}@${AWS_EC2_SSH_HOST}
           pwd
   do:
     runs-on: self-hosted
