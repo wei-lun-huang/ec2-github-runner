@@ -56,9 +56,8 @@ jobs:
             AWS_EC2_SSH_HOST: ${{secrets.AWS_EC2_SSH_HOST}}
             AWS_EC2_SSH_USER: ${{secrets.AWS_EC2_SSH_USER}}
         run: |
-          # echo "$AWS_EC2_SSH_PRIVATE_KEY" > private_key && chmod 600 private_key
-          # ssh -o StrictHostKeyChecking=no -i private_key ${AWS_EC2_SSH_USER}@${AWS_EC2_SSH_HOST}
-          ssh -o StrictHostKeyChecking=no -i ${AWS_EC2_SSH_PRIVATE_KEY} ${AWS_EC2_SSH_USER}@${AWS_EC2_SSH_HOST}
+          echo "$AWS_EC2_SSH_PRIVATE_KEY" > private_key && chmod 600 private_key
+          ssh -tt -o StrictHostKeyChecking=no -i private_key ${AWS_EC2_SSH_USER}@${AWS_EC2_SSH_HOST}
   do:
     runs-on: self-hosted
     needs: trigger
