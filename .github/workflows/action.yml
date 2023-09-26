@@ -56,6 +56,7 @@ jobs:
             AWS_EC2_SSH_HOSTNAME: ${{secrets.AWS_EC2_SSH_HOST}}
         run: |
           echo "$AWS_EC2_SSH_PRIVATE_KEY" > private_key && chmod 600 private_key
+          ssh-keyscan -H ${AWS_EC2_SSH_HOSTNAME} >> ~/.ssh/known_hosts
           ssh -o StrictHostKeyChecking=no -i private_key ubuntu@${AWS_EC2_SSH_HOSTNAME}
           pwd
   do:
