@@ -50,7 +50,8 @@ jobs:
             AWS_EC2_SSH_HOSTNAME: ${{secrets.AWS_EC2_SSH_HOST}}
         run: |
           echo "$AWS_EC2_SSH_PRIVATE_KEY" > private_key && chmod 600 private_key
-          ssh -T -i private_key -o StrictHostKeyChecking=no ubuntu@${AWS_EC2_SSH_HOSTNAME}
+          # ssh -T -i private_key -o StrictHostKeyChecking=no ubuntu@${AWS_EC2_SSH_HOSTNAME}
+          ssh -T -i private_key -o StrictHostKeyChecking=no ubuntu@10.0.49.72
           pwd
   do:
     runs-on: self-hosted
