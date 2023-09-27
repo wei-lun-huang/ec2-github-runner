@@ -50,15 +50,33 @@ jobs:
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws configure set default.region ${{ secrets.AWS_REGION }}
-      - name: trigger
-        env:
-            AWS_EC2_SSH_PRIVATE_KEY: ${{ secrets.AWS_EC2_SSH_PRIVATE_KEY }}
-            AWS_EC2_SSH_HOST: ${{secrets.AWS_EC2_SSH_HOST}}
-            AWS_EC2_SSH_USER: ${{secrets.AWS_EC2_SSH_USER}}
+      # - name: trigger
+      #   env:
+      #       AWS_EC2_SSH_PRIVATE_KEY: ${{ secrets.AWS_EC2_SSH_PRIVATE_KEY }}
+      #       AWS_EC2_SSH_HOST: ${{secrets.AWS_EC2_SSH_HOST}}
+      #       AWS_EC2_SSH_USER: ${{secrets.AWS_EC2_SSH_USER}}
+      #   run: |
+      #     echo "$AWS_EC2_SSH_PRIVATE_KEY" > private_key
+      #     sudo chmod 600 private_key
+      #     ssh -tt -o StrictHostKeyChecking=no -i private_key ${AWS_EC2_SSH_USER}@${AWS_EC2_SSH_HOST}
+      - name: Configure SSH
         run: |
-          echo "$AWS_EC2_SSH_PRIVATE_KEY" > private_key
-          sudo chmod 600 private_key
-          ssh -tt -o StrictHostKeyChecking=no -i private_key ${AWS_EC2_SSH_USER}@${AWS_EC2_SSH_HOST}
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/github-actions-key
+          chmod 600 ~/.ssh/github-actions-key
+          cat >>~/.ssh/config <<END
+          Host ec2
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/github-actions-key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_HOST: ${{ secrets.AWS_EC2_SSH_HOST }}
+          SSH_USER: ${{ secrets.AWS_EC2_SSH_USER }}
+          SSH_KEY: ${{ secrets.AWS_EC2_SSH_PRIVATE_KEY }}
+      - name: List home directory
+        run: ssh ec2 'ls -la'
   do:
     runs-on: self-hosted
     needs: trigger
