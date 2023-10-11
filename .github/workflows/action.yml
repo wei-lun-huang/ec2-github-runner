@@ -3,6 +3,10 @@ on:
   push:
     branches:
       - master
+      - release
+    tags:
+      - release-test
+      - production-test
   pull_request:
     branches:
       - develop
