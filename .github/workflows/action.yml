@@ -26,7 +26,9 @@ jobs:
           BASE_REF=${{ github.event.pull_request.base.ref }}
           BASE_REF=${BASE_REF:-default_value}
           BASE_REF=${{ github.event.pull_request.base.ref:-default_value }}
-          tag=${{ github.ref }}
+          tag1=${{ github.ref }}
+          echo $tag1
+          tag=$(basename "${{ github.ref }}")
           echo $tag
           if [[ $tag == 'release-test' || $branch == 'release' || $BASE_REF == 'release' || '${{ github.event.schedule }}' == '0 15 * * *' ]]; then
             echo "GOGO_ENV=staging" >> "$GITHUB_OUTPUT"
