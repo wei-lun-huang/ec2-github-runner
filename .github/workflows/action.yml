@@ -1,8 +1,8 @@
 name: Main workflow
 on:
   push:
-    # branches:
-    #   - master
+    branches:
+      - master
     #   - release
     tags:
       - release-test
