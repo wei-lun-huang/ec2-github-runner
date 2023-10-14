@@ -6,7 +6,7 @@ on:
     #   - release
     tags:
       - release-test
-      - production-test
+      - master-test
   pull_request:
     branches:
       - develop
@@ -14,95 +14,115 @@ on:
       - master
     types: [opened, synchronize]
 jobs:
-  list:
-    name: List EC2
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Configure AWS credentials
-        run: |
-          echo "Tag pushed: ${{ github.ref }}"
-          echo "Tag pushed: ${GITHUB_REF#refs/tags/}"
-          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws configure set default.region ${{ secrets.AWS_REGION }}
-      - name: list EC2
-        run: |
-          aws ec2 describe-instances --instance-ids i-028d6de4c222619ec
-  start:
-    name: start EC2
-    runs-on: ubuntu-latest
-    needs: list
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Configure AWS credentials
-        run: |
-          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws configure set default.region ${{ secrets.AWS_REGION }}
-      - name: start EC2
-        run: |
-          aws ec2 start-instances --instance-ids i-028d6de4c222619ec
-  trigger:
-    runs-on: ubuntu-latest
-    needs: start
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Configure AWS credentials
-        run: |
-          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws configure set default.region ${{ secrets.AWS_REGION }}
-      # - name: trigger
-      #   env:
-      #       AWS_EC2_SSH_PRIVATE_KEY: ${{ secrets.AWS_EC2_SSH_PRIVATE_KEY }}
-      #       AWS_EC2_SSH_HOST: ${{secrets.AWS_EC2_SSH_HOST}}
-      #       AWS_EC2_SSH_USER: ${{secrets.AWS_EC2_SSH_USER}}
-      #   run: |
-      #     echo "$AWS_EC2_SSH_PRIVATE_KEY" > private_key
-      #     sudo chmod 600 private_key
-      #     ssh -tt -o StrictHostKeyChecking=no -i private_key ${AWS_EC2_SSH_USER}@${AWS_EC2_SSH_HOST}
-      - name: Configure SSH
-        run: |
-          mkdir -p ~/.ssh/
-          echo "$SSH_KEY" > ~/.ssh/github-actions-key
-          chmod 600 ~/.ssh/github-actions-key
-          cat >>~/.ssh/config <<END
-          Host ec2
-            HostName $SSH_HOST
-            User $SSH_USER
-            IdentityFile ~/.ssh/github-actions-key
-            StrictHostKeyChecking no
-          END
-        env:
-          SSH_HOST: ${{ secrets.AWS_EC2_SSH_HOST }}
-          SSH_USER: ${{ secrets.AWS_EC2_SSH_USER }}
-          SSH_KEY: ${{ secrets.AWS_EC2_SSH_PRIVATE_KEY }}
-      - name: List home directory
-        run: ssh ec2 'ls -la'
-  do:
+  set_envs:
     runs-on: self-hosted
-    needs: trigger
+    outputs:
+      GOGO_ENV: ${{ steps.set_env.outputs.GOGO_ENV }}
     steps:
-      - uses: actions/checkout@v3
-      - name: Run a one-line script
+      - uses: actions/checkout@v2
+      - name: Set environment variables
+        id: set_env
         run: |
-          echo 'Hello World!'
-  stop:
-    name: stop EC2
-    runs-on: ubuntu-latest
-    needs: do
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Configure AWS credentials
-        run: |
-          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws configure set default.region ${{ secrets.AWS_REGION }}
-      - name: stop EC2
-        run: |
-          aws ec2 stop-instances --instance-ids i-028d6de4c222619ec
+          BASE_REF=${{ github.event.pull_request.base.ref }}
+          BASE_REF=${BASE_REF:-default_value}
+          BASE_REF=${{ github.event.pull_request.base.ref:-default_value }}
+          tag=${{ github.ref }}
+          echo $tag
+          if [[ $tag == 'release-test' || $branch == 'release' || $BASE_REF == 'release' || '${{ github.event.schedule }}' == '0 15 * * *' ]]; then
+            echo "GOGO_ENV=staging" >> "$GITHUB_OUTPUT"
+          elif [[ $tag == 'master-test' || $branch == 'master' || $BASE_REF == 'master' || '${{ github.event.schedule }}' == '0 17 * * *' ]]; then
+            echo "GOGO_ENV=production" >> $GITHUB_OUTPUT
+          fi
+
+  # list:
+  #   name: List EC2
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Configure AWS credentials
+  #       run: |
+  #         echo "Tag pushed: ${{ github.ref }}"
+  #         echo "Tag pushed: ${GITHUB_REF#refs/tags/}"
+  #         aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         aws configure set default.region ${{ secrets.AWS_REGION }}
+  #     - name: list EC2
+  #       run: |
+  #         aws ec2 describe-instances --instance-ids i-028d6de4c222619ec
+  # start:
+  #   name: start EC2
+  #   runs-on: ubuntu-latest
+  #   needs: list
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Configure AWS credentials
+  #       run: |
+  #         aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         aws configure set default.region ${{ secrets.AWS_REGION }}
+  #     - name: start EC2
+  #       run: |
+  #         aws ec2 start-instances --instance-ids i-028d6de4c222619ec
+  # trigger:
+  #   runs-on: ubuntu-latest
+  #   needs: start
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Configure AWS credentials
+  #       run: |
+  #         aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         aws configure set default.region ${{ secrets.AWS_REGION }}
+  #     # - name: trigger
+  #     #   env:
+  #     #       AWS_EC2_SSH_PRIVATE_KEY: ${{ secrets.AWS_EC2_SSH_PRIVATE_KEY }}
+  #     #       AWS_EC2_SSH_HOST: ${{secrets.AWS_EC2_SSH_HOST}}
+  #     #       AWS_EC2_SSH_USER: ${{secrets.AWS_EC2_SSH_USER}}
+  #     #   run: |
+  #     #     echo "$AWS_EC2_SSH_PRIVATE_KEY" > private_key
+  #     #     sudo chmod 600 private_key
+  #     #     ssh -tt -o StrictHostKeyChecking=no -i private_key ${AWS_EC2_SSH_USER}@${AWS_EC2_SSH_HOST}
+  #     - name: Configure SSH
+  #       run: |
+  #         mkdir -p ~/.ssh/
+  #         echo "$SSH_KEY" > ~/.ssh/github-actions-key
+  #         chmod 600 ~/.ssh/github-actions-key
+  #         cat >>~/.ssh/config <<END
+  #         Host ec2
+  #           HostName $SSH_HOST
+  #           User $SSH_USER
+  #           IdentityFile ~/.ssh/github-actions-key
+  #           StrictHostKeyChecking no
+  #         END
+  #       env:
+  #         SSH_HOST: ${{ secrets.AWS_EC2_SSH_HOST }}
+  #         SSH_USER: ${{ secrets.AWS_EC2_SSH_USER }}
+  #         SSH_KEY: ${{ secrets.AWS_EC2_SSH_PRIVATE_KEY }}
+  #     - name: List home directory
+  #       run: ssh ec2 'ls -la'
+  # do:
+  #   runs-on: self-hosted
+  #   needs: trigger
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Run a one-line script
+  #       run: |
+  #         echo 'Hello World!'
+  # stop:
+  #   name: stop EC2
+  #   runs-on: ubuntu-latest
+  #   needs: do
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Configure AWS credentials
+  #       run: |
+  #         aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         aws configure set default.region ${{ secrets.AWS_REGION }}
+  #     - name: stop EC2
+  #       run: |
+  #         aws ec2 stop-instances --instance-ids i-028d6de4c222619ec
