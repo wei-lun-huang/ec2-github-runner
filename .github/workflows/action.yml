@@ -34,7 +34,7 @@ jobs:
           elif [[ $tag == 'master-test' || $branch == 'master' || $BASE_REF == 'master' || '${{ github.event.schedule }}' == '0 17 * * *' ]]; then
             echo "GOGO_ENV=production" >> $GITHUB_OUTPUT
           fi
-          echo "::set-output name=GOGO_ENV::$(cat $GITHUB_OUTPUT)"
+          echo "$GITHUB_OUTPUT"
 
   # list:
   #   name: List EC2
