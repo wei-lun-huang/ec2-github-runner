@@ -24,8 +24,6 @@ jobs:
         id: set_env
         run: |
           BASE_REF=${{ github.event.pull_request.base.ref }}
-          BASE_REF=${BASE_REF:-default_value}
-          BASE_REF=${{ github.event.pull_request.base.ref:-default_value }}
           tag1=${{ github.ref }}
           echo $tag1
           tag=$(basename "${{ github.ref }}")
@@ -35,7 +33,16 @@ jobs:
           elif [[ $tag == 'master-test' || $branch == 'master' || $BASE_REF == 'master' || '${{ github.event.schedule }}' == '0 17 * * *' ]]; then
             echo "GOGO_ENV=production" >> $GITHUB_OUTPUT
           fi
-
+  build:
+    runs-on: self-hosted
+    needs: set_envs
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build image
+        env:
+          GOGO_ENV: ${{needs.set_envs.outputs.GOGO_ENV}}
+        run: |
+          echo $GOGO_ENV
   # list:
   #   name: List EC2
   #   runs-on: ubuntu-latest
